@@ -1,2 +1,0 @@
-# DB
-Technologies &amp; overview
