@@ -257,9 +257,27 @@ anisimov-ubuntu-pg-03-1    : ok=2    changed=0    unreachable=0    failed=0    s
 ```
 
 ## Ansible Roles
+[Официальный мануал](https://docs.ansible.com/ansible/latest/user_guide/playbooks_reuse_roles.html)   
+Для создания структуры директорий используется команда:
+```
+ansible-galaxy init <Название>
+``` 
 
 
+[Missing sudo password in Ansible](https://stackoverflow.com/questions/25582740/missing-sudo-password-in-ansible)
+```
+$ ansible-playbook playbook.yml --extra-vars 'ansible_sudo_pass=<sudo_pass>'
 
+PLAY [Install LEMP server] *****************************************************************************************************************************************************
+TASK [Gathering Facts] *********************************************************************************************************************************************************
+ok: [anisimov-ubuntu-pg-03-1]
+TASK [LEMP : include_tasks] ****************************************************************************************************************************************************
+included: /etc/ansible/ansible/playbooks/LEMP/tasks/default_settings.yml for anisimov-ubuntu-pg-03-1
+TASK [LEMP : update repo.] *****************************************************************************************************************************************************
+changed: [anisimov-ubuntu-pg-03-1]
+PLAY RECAP *********************************************************************************************************************************************************************
+anisimov-ubuntu-pg-03-1    : ok=3    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0 
+```
 
 
 
