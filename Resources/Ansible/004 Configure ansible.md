@@ -350,10 +350,26 @@ changed: [anisimov-ubuntu-pg-03-1]
 PLAY RECAP *********************************************************************************************************************************************************************
 anisimov-ubuntu-pg-03-1    : ok=4    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0  
 ```
-
-
-
-
+### Настроить время, локализацию и hostname
+Плавающие переменные добавим в директорию vars. Чтобы в дальнейшем на других серверах нам было удобно их менять.   
+Открываем файл, где указываем переменные для всего проекта. Файл находится по адресу: /var/ansible/playbooks/LEMP/vars/main.yml   
+Добавляем переменные
+```
+---
+# vars file for LEMP
+TEST_DIR: test_dir
+```
+Идем в default_settings.yml и добавляем задания (warn - подавлять оптимизационные рекомендательные сообщения):
+```
+  - name: install test dir.
+    remote_user: anisimov
+    become: yes
+    become_method: sudo
+    shell:
+      cmd: 'mkdir {{TEST_DIR}}'
+      warn: false
+```
+### Пункт 2. Установка LEMP.
 
 
 
