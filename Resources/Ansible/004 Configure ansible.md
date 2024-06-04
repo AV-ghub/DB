@@ -262,9 +262,52 @@ anisimov-ubuntu-pg-03-1    : ok=2    changed=0    unreachable=0    failed=0    s
 ```
 ansible-galaxy init <Название>
 ``` 
+На текущий момент в /var/ansible/ файл с ip адресами удаленных машин hosts.txt   
+Создаем в cd /var/ansible/ свой рабочий каталог playbooks и размещаем все свои роли там.   
+Там же (cd /var/ansible/playbooks/) создаем запускающий playbook.yml
+Генерируем роль LEMP (фактически каталог предопределенной структуры в ).
+```
+cd /var/ansible/playbooks/
+ansible-galaxy init LEMP
+```
+Открываем playbook.yml. Добавляем:
+```
+- name: Install LEMP server
+  hosts: all
+  become: no
+  roles:
+    - LEMP
+```
 
-
+### Пункт 1. Первоначальная настройка сервера.
+```
+cd /var/ansible/playbooks/LEMP/tasks/
+```
+Создаем yml-файл для пункта 1   
+```
+touch default_settings.yml
+```
+Заходим в главный файл конфигурации в заданиях ./LEMP/tasks/main.yml   
+Необходимо подгрузить выше созданный файл конфигурации. Для этого используется модуль include_tasks и название файла:   
+```
+- include_tasks: default_settings.yml
+```
+Теперь начинаем редактировать default_settings.yml. Для установки нам потребуется использование shell модуль. Для начала необходимо обновить все репозитории. Добавляем:   
+```
+---
+  - name: update repo.
+    shell: apt update
+```
+Сохраняем и запускаем из директории, где лежит playbook.yml    
+```
+ansible-playbook playbook.yml
+```
+Работать это не будет, будет сообщение [Permission denied](https://stackoverflow.com/questions/49720135/ansible-playbook-permission-denied), [Missing sudo password](https://stackoverflow.com/questions/25582740/missing-sudo-password-in-ansible) и т.п.   
+Разумеется, apt update требует sudo, а мы идем под пользователем и эскалацию Ansible не понимает.    
+Те ключи, что у него есть (sudo: yes, sudo_user: postgres, become: true, become_method: sudo) максмум пытаются эскалироваться, но пароль для sudo подставить не могут.   
+Решение проблемы в итоге есть тут
 [Missing sudo password in Ansible](https://stackoverflow.com/questions/25582740/missing-sudo-password-in-ansible)
+И решается она вот таким ключом
 ```
 $ ansible-playbook playbook.yml --extra-vars 'ansible_sudo_pass=<sudo_pass>'
 
@@ -272,15 +315,41 @@ PLAY [Install LEMP server] *****************************************************
 TASK [Gathering Facts] *********************************************************************************************************************************************************
 ok: [anisimov-ubuntu-pg-03-1]
 TASK [LEMP : include_tasks] ****************************************************************************************************************************************************
-included: /etc/ansible/ansible/playbooks/LEMP/tasks/default_settings.yml for anisimov-ubuntu-pg-03-1
+included: /var/ansible/playbooks/LEMP/tasks/default_settings.yml for anisimov-ubuntu-pg-03-1
 TASK [LEMP : update repo.] *****************************************************************************************************************************************************
 changed: [anisimov-ubuntu-pg-03-1]
 PLAY RECAP *********************************************************************************************************************************************************************
 anisimov-ubuntu-pg-03-1    : ok=3    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0 
 ```
+Видимо есть другие варианты. Напр. настройка пароля для SSH. Но суть понятна, пароль как-то на ту строну передавать надо.   
 
+### Начинаем устанавливать приложения и пакеты.
 
+Также будем использовать модуль shell, так как нужных нам утилит достаточно много и устанавливать все через модуль apt будет достаточно долго и проблематично.   
+В файл default_settings.yml добавляем:   
+```
+  - name: install default app.
+    remote_user: anisimov
+    become: yes
+    become_method: sudo
+    shell:
+      cmd: 'apt install -y dirmngr mc iotop htop telnet tcpdump nmap curl hexedit sudo zip unzip patch pwgen vim less parted subversion ntp bzip2 lsof strace mutt s-nail ncdu >
+```
+```
+$ ansible-playbook playbook.yml --extra-vars 'ansible_sudo_pass=<sudo_pass>'
 
+PLAY [Install LEMP server] *****************************************************************************************************************************************************
+TASK [Gathering Facts] *********************************************************************************************************************************************************
+ok: [anisimov-ubuntu-pg-03-1]
+TASK [LEMP : include_tasks] ****************************************************************************************************************************************************
+included: /var/ansible/playbooks/LEMP/tasks/default_settings.yml for anisimov-ubuntu-pg-03-1
+TASK [LEMP : update repo.] *****************************************************************************************************************************************************
+changed: [anisimov-ubuntu-pg-03-1]
+TASK [LEMP : install default app.] *********************************************************************************************************************************************
+changed: [anisimov-ubuntu-pg-03-1]
+PLAY RECAP *********************************************************************************************************************************************************************
+anisimov-ubuntu-pg-03-1    : ok=4    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0  
+```
 
 
 
